@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html> 
+<head> 
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/> 
+    <title>LODAC location</title> 
+    <script src="http://maps.google.com/maps/api/js?sensor=true" type="text/javascript"></script>
+    <script type="text/javascript" src="http://code.google.com/apis/gears/gears_init.js"></script> 
+    <script type="text/javascript" 
+        src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script type="text/javascript"> 
+
+    var map;
+    var markers = {};
+    var new_markers = {};
+    var info_window;
+    var ne, sw, ne_lat, ne_lng, sw_lat, sw_lng;
+
+    function initialize(){
+        var options = {
+            zoom: 16,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        map = new google.maps.Map($("#map")[0], options);
+       
+        if (navigator.geolocation){
+            browserSupportFlag = true;
+            navigator.geolocation.getCurrentPosition(function(position){
+                map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
+            }, function(){
+                handleNoGeolocation(browserSupportFlag);
+            });
+        }else{
+            map.setCenter(new google.maps.LatLng(35.693308,139.758282));
+        } 
+        google.maps.event.addListener(map, "idle", function(){
+            showAllLocation(); 
+        });
+    } 
+  
+    function updateBoundsInfo(){
+        ne = map.getBounds().getNorthEast();
+        sw = map.getBounds().getSouthWest();
+        ne_lat = ne.lat();
+        ne_lng = ne.lng();
+        sw_lat = sw.lat();
+        sw_lng = sw.lng();
+        $("#bounds").append("表示範囲：<br/>" + ne + ", <br/>" + sw);
+    }
+   
+    function removeMarker(link){
+        markers[link].setMap(null);
+        delete markers[link];
+    } 
+
+    function removeOldMarkers(){
+        for(m in markers){
+            if(!(m in new_markers)){
+                removeMarker(m);
+            }
+        }
+    }
+    
+   function generateMarker(lat, lng, link, title){
+        var pos = new google.maps.LatLng(lat, lng);
+        if(link in markers){
+            new_markers[link] = markers[link];
+        }else{
+            var options = {
+                map: map,
+                position: pos
+            };
+            new_markers[link] = new google.maps.Marker(options);
+        } 
+
+        var content = "<a href=\""+link+"\">"+title+"</a>"; 
+        if(content.length > 0){
+            var info = {
+                content: content
+            };
+
+            google.maps.event.addListener(new_markers[link], "click", function(){ 
+                if (info_window){
+                    info_window.close();
+                }
+                info_window = new google.maps.InfoWindow(info);
+                info_window.open(map, new_markers[link]);
+                map.panTo(pos);
+            }); 
+        }
+    }
+
+        
+    function showAllLocation(){
+        $("#bounds").empty();
+        $("#result").empty();
+        updateBoundsInfo();
+        
+        $.ajax({
+            type: "GET",
+            url: "location.cgi",
+            data: "NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng,
+            dataType: "json",
+            success: function(data){
+                var data_num = data.results.bindings.length;
+                var results = "";
+                for (var i=0; i<data_num; i++){
+                    var loc = data.results.bindings[i];
+                    var lat = loc.lat.value;
+                    var lng = loc.long.value;
+                    var title = loc.title.value;
+                    var link = loc.link.value;
+                    var link_str = "<a href=\""+link+"\">"+title+"</a>"; 
+                    results += "・"+link_str+"  ("+lat+", "+lng+")<br/>";
+                    generateMarker(lat, lng, link, title);
+                }
+                removeOldMarkers();
+                markers = new_markers;
+                $("#result").append(results);
+            }
+        });
+    }
+    </script>
+</head> 
+<body onload="initialize()">
+    <div id="leftbox" style="float: left; margin: 10px">  
+        <div id="map" style="width: 600px; height: 400px;"></div>
+        <div id="control" style="width: 600px; height: 100px;">
+        </div>
+        <div id="bounds" style="width: 600px; height: 100px;"></div>
+    </div> 
+    <div id="rightbox" style="float: left; margin: 10px"> 
+        <div id="result" style="width: 600px; height: 500px;"></div>
+    </div>
+</body> 
+</html>
