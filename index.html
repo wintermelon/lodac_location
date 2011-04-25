@@ -10,6 +10,7 @@
     <script type="text/javascript"> 
 
     var map;
+    var geocoder;
     var markers = {};
     var new_markers = {};
     var info_window;
@@ -21,6 +22,8 @@
             mapTypeId: google.maps.MapTypeId.ROADMAP
         };
         map = new google.maps.Map($("#map")[0], options);
+      
+        geocoder = new google.maps.Geocoder(); 
        
         if (navigator.geolocation){
             browserSupportFlag = true;
@@ -44,7 +47,7 @@
         ne_lng = ne.lng();
         sw_lat = sw.lat();
         sw_lng = sw.lng();
-        $("#bounds").append("表示範囲：<br/>" + ne + ", <br/>" + sw);
+        $("#bounds").append("表示範囲：<br/>" + ne + ", " + sw);
     }
    
     function removeMarker(link){
@@ -119,14 +122,35 @@
             }
         });
     }
+
+    function setCenterAs(){
+        new_center = $("#center_location").val(); 
+        if (geocoder){
+            geocoder.geocode({"address": new_center}, function(results, status){
+                if(status == google.maps.GeocoderStatus.OK){
+                    map.setCenter(results[0].geometry.location);
+                }else{
+                    alert("Sorry, but geocoding is failed.");
+                } 
+            });
+        } 
+    }
+
+    function pressEnter(){
+        if(window.event.keyCode == 13){
+            setCenterAs(); 
+        } 
+    }
     </script>
 </head> 
 <body onload="initialize()">
     <div id="leftbox" style="float: left; margin: 10px">  
-        <div id="map" style="width: 600px; height: 400px;"></div>
-        <div id="control" style="width: 600px; height: 100px;">
+        <div id="control" style="width: 600px; height: 35px; padding-top: 10px">
+            <input type="text" id="center_location" style="width: 400px" onKeyPress="pressEnter();"/>
+            <input type="button" id="center_button" value="この地点を中心にする" onclick="setCenterAs();"/> 
         </div>
-        <div id="bounds" style="width: 600px; height: 100px;"></div>
+        <div id="map" style="width: 600px; height: 400px;"></div>
+       <div id="bounds" style="width: 600px; height: 100px; padding-top: 10px"></div>
     </div> 
     <div id="rightbox" style="float: left; margin: 10px"> 
         <div id="result" style="width: 600px; height: 500px;"></div>

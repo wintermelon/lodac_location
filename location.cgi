@@ -25,10 +25,9 @@ query = """
     PREFIX dct: <http://purl.org/dc/terms/>
     PREFIX omgeo: <http://www.ontotext.com/owlim/geo#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
-    SELECT distinct ?link ?type ?title ?lat ?long
+    SELECT distinct ?link ?title ?lat ?long
     WHERE{
         ?link omgeo:within(%(NE_lat)s %(NE_long)s %(SW_lat)s %(SW_long)s);
-        ?type <http://lod.ac/ns/lodac#PostalCode>;
         dct:title ?title;
         geo:lat ?lat;
         geo:long ?long;
