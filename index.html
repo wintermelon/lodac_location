@@ -13,7 +13,10 @@
     var geocoder;
     var markers = {};
     var new_markers = {};
+    var dist_array = new Array();
     var info_window;
+    var opened_marker_link = "";
+    var center;
     var ne, sw, ne_lat, ne_lng, sw_lat, sw_lng;
 
     function initialize(){
@@ -40,14 +43,15 @@
         });
     } 
   
-    function updateBoundsInfo(){
+    function updateCenterAndBounds(){
+        center = map.getCenter();
         ne = map.getBounds().getNorthEast();
         sw = map.getBounds().getSouthWest();
         ne_lat = ne.lat();
         ne_lng = ne.lng();
         sw_lat = sw.lat();
         sw_lng = sw.lng();
-        $("#bounds").append("表示範囲：<br/>" + ne + ", " + sw);
+        $("#bounds").append("中心座標： " + center + "<br/>表示範囲：<br/>" + ne + ", " + sw);
     }
    
     function removeMarker(link){
@@ -63,45 +67,65 @@
         }
     }
     
-   function generateMarker(lat, lng, link, title){
-        var pos = new google.maps.LatLng(lat, lng);
-        if(link in markers){
-            new_markers[link] = markers[link];
+   function generateMarker(info){
+        var pos = new google.maps.LatLng(info.lat, info.lng);
+        dist_array.push({link: info.link, dist: info.dist});
+        if(info.link in markers){
+            new_markers[info.link] = {marker: markers[info.link].marker, info: info};
         }else{
             var options = {
                 map: map,
                 position: pos
             };
-            new_markers[link] = new google.maps.Marker(options);
+            new_markers[info.link] = {marker: new google.maps.Marker(options), info: info};
         } 
+   }
 
-        var content = "<a href=\""+link+"\">"+title+"</a>"; 
+    function setInfoWindow(marker_obj){
+        var pos = new google.maps.LatLng(marker_obj.info.lat, marker_obj.info.lng);
+        var content = "<b>"+marker_obj.info.id+"</b>: <a href=\""+marker_obj.info.link+"\">"+marker_obj.info.title+"</a>"; 
         if(content.length > 0){
-            var info = {
+            var info_options = {
                 content: content
             };
 
-            google.maps.event.addListener(new_markers[link], "click", function(){ 
+            google.maps.event.addListener(marker_obj.marker, "click", function(){ 
                 if (info_window){
                     info_window.close();
+                    opened_marker_link = "";
                 }
-                info_window = new google.maps.InfoWindow(info);
-                info_window.open(map, new_markers[link]);
-                map.panTo(pos);
+                /*map.panTo(pos);*/
+                info_window = new google.maps.InfoWindow(info_options);
+                info_window.open(map, marker_obj.marker);
+                opened_marker_link = marker_obj.info.link;
             }); 
         }
     }
 
+    function openInfoWindow(link){
+        var m = markers[link];
+        var pos = new google.maps.LatLng(m.info.lat, m.info.lng);
+        var content = "<b>"+m.info.id+"</b>: <a href=\""+m.info.link+"\">"+m.info.title+"</a>"; 
+        if(info_window){
+            info_window.close();
+            oepned_marker_link = ""; 
+        }
+        info_window = new google.maps.InfoWindow({content: content});
+        info_window.open(map, m.marker);
+        opened_marker_link = link;
+        map.panTo(pos);
+    }
         
     function showAllLocation(){
         $("#bounds").empty();
         $("#result").empty();
-        updateBoundsInfo();
+        updateCenterAndBounds();
+        dist_array = new Array();
         
         $.ajax({
             type: "GET",
             url: "location.cgi",
-            data: "NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng,
+            data: "endpoint=dbpedia&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng,
             dataType: "json",
             success: function(data){
                 var data_num = data.results.bindings.length;
@@ -112,12 +136,28 @@
                     var lng = loc.long.value;
                     var title = loc.title.value;
                     var link = loc.link.value;
-                    var link_str = "<a href=\""+link+"\">"+title+"</a>"; 
-                    results += "・"+link_str+"  ("+lat+", "+lng+")<br/>";
-                    generateMarker(lat, lng, link, title);
+                    var dist = calcDistance(lat, lng, center.lat(), center.lng());
+                    var info = {id: 0, lat: lat, lng: lng, title: title, link: link, dist: dist}; 
+                    generateMarker(info);
                 }
                 removeOldMarkers();
                 markers = new_markers;
+
+                dist_array.sort(function(a,b){return (a.dist-b.dist)});
+                for (var i=0; i<data_num; i++){
+                    var m = markers[dist_array[i].link]; 
+                    m.info.id = i+1;
+                    /*results += "<b>"+m.info.id+"</b>\t<a href=\""+m.info.link+"\">"+m.info.title+"</a>  ("+lat+", "+lng+")<br/>";*/
+                    results += "<b>"+m.info.id+"</b>\t<a href=\"javascript:void(0);\" onclick=\"openInfoWindow('"+m.info.link+"');\">"+m.info.title+"</a>  ("+lat+", "+lng+")<br/>";
+                    setInfoWindow(m);
+                }
+
+                if(info_window && opened_marker_link.length > 0){
+                    var info = markers[opened_marker_link].info;
+                    var content = "<b>"+info.id+"</b>: <a href=\""+info.link+"\">"+info.title+"</a>"; 
+                    info_window.setContent(content);
+                }
+
                 $("#result").append(results);
             }
         });
@@ -125,15 +165,24 @@
 
     function setCenterAs(){
         new_center = $("#center_location").val(); 
-        if (geocoder){
-            geocoder.geocode({"address": new_center}, function(results, status){
-                if(status == google.maps.GeocoderStatus.OK){
-                    map.setCenter(results[0].geometry.location);
-                }else{
-                    alert("Sorry, but geocoding is failed.");
-                } 
-            });
-        } 
+      
+        $.ajax({
+            type: "GET",
+            url: "geocoding.cgi",
+            data: "new_center="+new_center,
+            dataType: "xml",
+            success: function(data){
+                var lat = $(data).find("coordinate").find("lat").text();
+                var lng = $(data).find("coordinate").find("lng").text();
+                map.setCenter(new google.maps.LatLng(lat, lng));
+            }
+        });
+    }
+
+    function calcDistance(lat1, lng1, lat2, lng2){
+        var r = 6378.137;
+        var d = r * Math.acos(Math.sin(lng1) * Math.sin(lng2) + Math.cos(lng1) * Math.cos(lng2) * Math.cos(lat1-lat2));
+        return d; 
     }
 
     function pressEnter(){
@@ -150,7 +199,14 @@
             <input type="button" id="center_button" value="この地点を中心にする" onclick="setCenterAs();"/> 
         </div>
         <div id="map" style="width: 600px; height: 400px;"></div>
-       <div id="bounds" style="width: 600px; height: 100px; padding-top: 10px"></div>
+        <div id="bounds" style="width: 600px; height: 100px; padding-top: 10px"></div>
+        <div id="referrer" style="width: 600px; padding-top: 10px">
+            <script type="text/javascript" language="javascript">
+            <!--
+            document.write("リファラー: " + document.referrer);
+            // -->
+            </script>
+        </div>  
     </div> 
     <div id="rightbox" style="float: left; margin: 10px"> 
         <div id="result" style="width: 600px; height: 500px;"></div>
