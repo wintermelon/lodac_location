@@ -10,14 +10,14 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 import cgitb
 cgitb.enable()
 
-endpoint = ''
+endpoint = []
 NE_lat = NE_long = SW_lat = SW_long = 0
 
 form = cgi.FieldStorage()
 method = os.environ['REQUEST_METHOD']
 
 if(method == 'GET' and form.has_key('endpoint') and form.has_key('NE_lat') and form.has_key('NE_long') and form.has_key('SW_lat') and form.has_key('SW_long')):
-    endpoint = form['endpoint'].value 
+    endpoint = form['endpoint'].value.split(",") 
     NE_lat = form['NE_lat'].value
     NE_long = form['NE_long'].value
     SW_lat = form['SW_lat'].value
@@ -38,11 +38,7 @@ q_lodac = """
     }
     """ % locals()
 
-# ?type <http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing>
-# ?type <http://lod.ac/ns/location#PostalCode>; 
-
-ep_dbpedia = SPARQLWrapper("http://linkedgeodata.org/sparql")
-#ep_dbpedia = SPARQLWrapper("http://DBpedia.org/sparql")
+ep_dbpedia = SPARQLWrapper("http://DBpedia.org/sparql")
 q_dbpedia = """
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
@@ -60,38 +56,57 @@ q_dbpedia = """
     }
 """ % locals()
 
-ep_lgd = SPARQLWrapper("http://location.lod.ac/sparql")
+ep_lgd = SPARQLWrapper("http://linkedgeodata.org/sparql")
 q_lgd = """
-    PREFIX lgdo: <http://linkedgeodata.org/ontology/>
-    SELECT DISTINCT ?link ?title ?lat ?long
-    FROM <http://linkedgeodata.org>
-    WHERE {
-            ?link 
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    SELECT DISTINCT ?link ?title ?lat ?long WHERE {
+        ?link rdfs:label ?title;
+        geo:lat ?lat;
+        geo:long ?long.
+        FILTER (
+            ?lat > %(SW_lat)s &&
+            ?lat < %(NE_lat)s &&
+            ?long > %(SW_long)s &&
+            ?long < %(NE_long)s &&
+            lang(?title) = "ja"
+        ).
     }
 """ % locals()
  
-ep_array = {'lodac': {'endpoint':ep_lodac, 'query':q_lodac}, 
-            'dbpedia': {'endpoint':ep_dbpedia, 'query':q_dbpedia}}
-
-sparql_wrapper = ep_array[endpoint]['endpoint']
-sparql = ep_array[endpoint]['query']
-
-sparql_wrapper.setQuery(sparql)
-sparql_wrapper.setReturnFormat(JSON)
+ep_array = {
+    'lodac': {'endpoint':ep_lodac, 'query':q_lodac}, 
+    'dbpedia': {'endpoint':ep_dbpedia, 'query':q_dbpedia},
+    'lgd': {'endpoint':ep_lgd, 'query':q_lgd}
+}
 
 print "Content-type: text/javascript; charset=utf-8"  
 print
 
-results = str(sparql_wrapper.query().convert())
-results = eval(results)
+result_json = '{'
 
-if results["results"].has_key("bindings"):
-    if len(results["results"]) > 1:
-        tmp_bindings = deepcopy(results["results"]["bindings"])
-        results["results"] = {"bindings": tmp_bindings}
+for e in endpoint:
+    sparql_wrapper = ep_array[e]['endpoint']
+    sparql = ep_array[e]['query']
+    
+    sparql_wrapper.setQuery(sparql)
+    sparql_wrapper.setReturnFormat(JSON)
 
-results = str(results)
-results = results.replace("'", "\"")
-results = results.replace("u\"", "\"")
+    results = str(sparql_wrapper.query().convert())
+    results = eval(results)
 
-print results
+    if results["results"].has_key("bindings"):
+        if len(results["results"]) > 1:
+            tmp_bindings = deepcopy(results["results"]["bindings"])
+            results["results"] = {"bindings": tmp_bindings}
+
+    results = str(results)
+    results = results.replace("'", "\"")
+    results = results.replace("u\"", "\"")
+
+    result_json += '"%(e)s": %(results)s,' % locals()
+
+result_json = result_json.rstrip(",")
+result_json += '}'
+
+print result_json

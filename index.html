@@ -11,13 +11,16 @@
 
     var map;
     var geocoder;
-    var markers = {};
-    var new_markers = {};
-    var dist_array = new Array();
-    var info_window;
-    var opened_marker_link = "";
-    var center;
     var ne, sw, ne_lat, ne_lng, sw_lat, sw_lng;
+    var center;
+    var ep_list = new Array();
+ 
+    var markers = {"lodac":{},"dbpedia":{}, "lgd":{}};
+    var new_markers = {"lodac":{},"dbpedia":{}, "lgd":{}};
+    var dist_array = new Array();
+
+    var info_window;
+    var opened_marker = {link:"", ep:""};
 
     function initialize(){
         var options = {
@@ -41,6 +44,12 @@
         google.maps.event.addListener(map, "idle", function(){
             showAllLocation(); 
         });
+
+        $("input[name='ep']").click( function(){
+            showAllLocation(); 
+        });
+
+        ep_list = getEndPointList();  
     } 
   
     function updateCenterAndBounds(){
@@ -54,65 +63,67 @@
         $("#bounds").append("中心座標： " + center + "<br/>表示範囲：<br/>" + ne + ", " + sw);
     }
    
-    function removeMarker(link){
-        markers[link].setMap(null);
-        delete markers[link];
+    function removeMarker(link, ep){
+        markers[ep][link].marker.setMap(null);
+        delete markers[ep][link];
     } 
 
     function removeOldMarkers(){
-        for(m in markers){
-            if(!(m in new_markers)){
-                removeMarker(m);
+        for(e in markers){
+            for(m in markers[e]){
+                if(!(markers[e][m].info.link in new_markers[e])){
+                    removeMarker(markers[e][m].info.link, markers[e][m].info.ep);
+                }
             }
         }
     }
     
    function generateMarker(info){
         var pos = new google.maps.LatLng(info.lat, info.lng);
-        dist_array.push({link: info.link, dist: info.dist});
-        if(info.link in markers){
-            new_markers[info.link] = {marker: markers[info.link].marker, info: info};
+        dist_array.push({link: info.link, dist: info.dist, ep:info.ep});
+        if(info.link in markers[info.ep]){
+            new_markers[info.ep][info.link] = {marker: markers[info.ep][info.link].marker, info: info};
         }else{
             var options = {
                 map: map,
                 position: pos
             };
-            new_markers[info.link] = {marker: new google.maps.Marker(options), info: info};
+            new_markers[info.ep][info.link] = {marker: new google.maps.Marker(options), info: info};
         } 
    }
 
-    function setInfoWindow(marker_obj){
-        var pos = new google.maps.LatLng(marker_obj.info.lat, marker_obj.info.lng);
-        var content = "<b>"+marker_obj.info.id+"</b>: <a href=\""+marker_obj.info.link+"\">"+marker_obj.info.title+"</a>"; 
+    function setInfoWindow(m){
+        var pos = new google.maps.LatLng(m.info.lat, m.info.lng);
+        var content = "<b>"+m.info.id+"</b>: <a href=\""+m.info.link+"\">"+m.info.title+"</a>"; 
         if(content.length > 0){
             var info_options = {
                 content: content
             };
 
-            google.maps.event.addListener(marker_obj.marker, "click", function(){ 
+            google.maps.event.addListener(m.marker, "click", function(){ 
                 if (info_window){
                     info_window.close();
-                    opened_marker_link = "";
+                    opened_marker = {link:"", ep:""};
                 }
                 /*map.panTo(pos);*/
                 info_window = new google.maps.InfoWindow(info_options);
-                info_window.open(map, marker_obj.marker);
-                opened_marker_link = marker_obj.info.link;
+                info_window.open(map, m.marker);
+                opened_marker = {link: m.info.link, ep: m.info.ep};
             }); 
         }
     }
 
-    function openInfoWindow(link){
-        var m = markers[link];
+    function openInfoWindow(link, ep){
+        var m = markers[ep][link];
         var pos = new google.maps.LatLng(m.info.lat, m.info.lng);
         var content = "<b>"+m.info.id+"</b>: <a href=\""+m.info.link+"\">"+m.info.title+"</a>"; 
         if(info_window){
             info_window.close();
-            oepned_marker_link = ""; 
+            opened_marker = {link:"", ep:""}; 
         }
         info_window = new google.maps.InfoWindow({content: content});
         info_window.open(map, m.marker);
-        opened_marker_link = link;
+        opened_marker = {link: link, ep: ep};
         map.panTo(pos);
     }
         
@@ -121,39 +132,44 @@
         $("#result").empty();
         updateCenterAndBounds();
         dist_array = new Array();
+        ep_list = getEndPointList();
         
         $.ajax({
             type: "GET",
             url: "location.cgi",
-            data: "endpoint=dbpedia&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng,
+            data: "endpoint="+ep_list.join()+"&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng,
             dataType: "json",
             success: function(data){
-                var data_num = data.results.bindings.length;
                 var results = "";
-                for (var i=0; i<data_num; i++){
-                    var loc = data.results.bindings[i];
-                    var lat = loc.lat.value;
-                    var lng = loc.long.value;
-                    var title = loc.title.value;
-                    var link = loc.link.value;
-                    var dist = calcDistance(lat, lng, center.lat(), center.lng());
-                    var info = {id: 0, lat: lat, lng: lng, title: title, link: link, dist: dist}; 
-                    generateMarker(info);
+                for(d in ep_list){
+                    var ep = ep_list[d];
+                    var data_num = data[ep].results.bindings.length;
+                    for (var i=0; i<data_num; i++){
+                        var loc = data[ep].results.bindings[i];
+                        var lat = loc.lat.value;
+                        var lng = loc.long.value;
+                        var title = loc.title.value;
+                        var link = loc.link.value;
+                        var dist = calcDistance(lat, lng, center.lat(), center.lng());
+                        var info = {id: 0, lat: lat, lng: lng, title: title, link: link, dist: dist, ep: ep}; 
+                        generateMarker(info);
+                    }
                 }
+                
                 removeOldMarkers();
                 markers = new_markers;
+                new_markers = {"lodac":{},"dbpedia":{}, "lgd":{}};
 
                 dist_array.sort(function(a,b){return (a.dist-b.dist)});
-                for (var i=0; i<data_num; i++){
-                    var m = markers[dist_array[i].link]; 
+                for (var i=0; i<dist_array.length; i++){
+                    var m = markers[dist_array[i].ep][dist_array[i].link]; 
                     m.info.id = i+1;
-                    /*results += "<b>"+m.info.id+"</b>\t<a href=\""+m.info.link+"\">"+m.info.title+"</a>  ("+lat+", "+lng+")<br/>";*/
-                    results += "<b>"+m.info.id+"</b>\t<a href=\"javascript:void(0);\" onclick=\"openInfoWindow('"+m.info.link+"');\">"+m.info.title+"</a>  ("+lat+", "+lng+")<br/>";
+                    results += "<b>"+m.info.id+"</b>\t<a href=\"javascript:void(0);\" onclick=\"openInfoWindow('"+m.info.link+"','"+m.info.ep+"');\">"+m.info.title+"</a>  ("+m.info.lat+", "+m.info.lng+")<br/>";
                     setInfoWindow(m);
                 }
 
-                if(info_window && opened_marker_link.length > 0){
-                    var info = markers[opened_marker_link].info;
+                if(info_window && opened_marker.link.length > 0 && opened_marker.ep.length > 0){
+                    var info = markers[opened_marker.ep][opened_marker.link].info;
                     var content = "<b>"+info.id+"</b>: <a href=\""+info.link+"\">"+info.title+"</a>"; 
                     info_window.setContent(content);
                 }
@@ -190,6 +206,14 @@
             setCenterAs(); 
         } 
     }
+
+    function getEndPointList(){
+        var list = new Array();
+        $("input[name='ep']:checked").each(function(){
+            list.push(this.value);
+        });
+        return list; 
+    }
     </script>
 </head> 
 <body onload="initialize()">
@@ -199,7 +223,13 @@
             <input type="button" id="center_button" value="この地点を中心にする" onclick="setCenterAs();"/> 
         </div>
         <div id="map" style="width: 600px; height: 400px;"></div>
-        <div id="bounds" style="width: 600px; height: 100px; padding-top: 10px"></div>
+        <div id="source" style="width: 600px; padding: 10px 0px">
+            データ取得先： 
+            <input type="checkbox" id="lodac" value="lodac" name="ep" checked>LODAC   
+            <input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia   
+            <input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData   
+        </div> 
+        <div id="bounds" style="width: 600px; padding: 10px 0px"></div>
         <div id="referrer" style="width: 600px; padding-top: 10px">
             <script type="text/javascript" language="javascript">
             <!--
