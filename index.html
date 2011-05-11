@@ -15,8 +15,8 @@
     var center;
     var ep_list = new Array();
  
-    var markers = {"lodac":{},"dbpedia":{}, "lgd":{}};
-    var new_markers = {"lodac":{},"dbpedia":{}, "lgd":{}};
+    var markers = {lodac:{},dbpedia:{}, lgd:{}};
+    var new_markers = {lodac:{},dbpedia:{}, lgd:{}};
     var dist_array = new Array();
 
     var info_window;
@@ -158,13 +158,14 @@
                 
                 removeOldMarkers();
                 markers = new_markers;
-                new_markers = {"lodac":{},"dbpedia":{}, "lgd":{}};
+                new_markers = {lodac:{},dbpedia:{}, lgd:{}};
 
+                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData"};
                 dist_array.sort(function(a,b){return (a.dist-b.dist)});
                 for (var i=0; i<dist_array.length; i++){
                     var m = markers[dist_array[i].ep][dist_array[i].link]; 
                     m.info.id = i+1;
-                    results += "<b>"+m.info.id+"</b>\t<a href=\"javascript:void(0);\" onclick=\"openInfoWindow('"+m.info.link+"','"+m.info.ep+"');\">"+m.info.title+"</a>  ("+m.info.lat+", "+m.info.lng+")<br/>";
+                    results += "<b>"+m.info.id+"</b>\t<a href=\"javascript:void(0);\" onclick=\"openInfoWindow('"+m.info.link+"','"+m.info.ep+"');\">"+m.info.title+"</a>  (約"+Math.round(m.info.dist*10)/10+"km) ["+ep_name[m.info.ep]+"]<br/>";
                     setInfoWindow(m);
                 }
 
@@ -196,9 +197,19 @@
     }
 
     function calcDistance(lat1, lng1, lat2, lng2){
-        var r = 6378.137;
-        var d = r * Math.acos(Math.sin(lng1) * Math.sin(lng2) + Math.cos(lng1) * Math.cos(lng2) * Math.cos(lat1-lat2));
-        return d; 
+        var radianLat1 = lat1 * ( Math.PI  / 180 );
+        var radianLng1 = lng1 * ( Math.PI  / 180 );
+        var radianLat2 = lat2 * ( Math.PI  / 180 );
+        var radianLng2 = lng2 * ( Math.PI  / 180 );
+        var earth_radius = 6378.1;
+        var diffLat =  ( radianLat1 - radianLat2 );
+        var diffLng =  ( radianLng1 - radianLng2 );
+        var sinLat = Math.sin( diffLat / 2  );
+        var sinLng = Math.sin( diffLng / 2  );
+        var a = Math.pow(sinLat, 2.0) + Math.cos(radianLat1) * Math.cos(radianLat2) * Math.pow(sinLng, 2.0);
+        var distance = earth_radius * 2 * Math.asin(Math.min(1, Math.sqrt(a)));
+        
+        return distance; 
     }
 
     function pressEnter(){
