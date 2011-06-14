@@ -38,8 +38,17 @@
             }, function(){
                 handleNoGeolocation(browserSupportFlag);
             });
+        }else if(google.gears){
+            browserSupportFlag = true;
+            var geo = google.gears.factory.create('beta.geolocation');
+            geo.getCurrentPosition(function(position){
+                map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
+            }, function(){
+                handleNoGeolocation(browserSupportFlag);
+            });
         }else{
-            map.setCenter(new google.maps.LatLng(35.693308,139.758282));
+            browserSupportFlag = false;
+            handleNoGeolocation(browserSupportFlag);
         } 
         google.maps.event.addListener(map, "idle", function(){
             showAllLocation(); 
@@ -51,6 +60,15 @@
 
         ep_list = getEndPointList();  
     } 
+
+    function handleNoGeolocation(errorFlag){
+        if (errorFlag == true){
+            console.log("Geolocation service failed."); 
+        }else{
+            console.log("Your browser doesn't support geolocation.");
+        }
+        map.setCenter(new google.maps.LatLng(35.693308,139.758282));
+    }
   
     function updateCenterAndBounds(){
         center = map.getCenter();
