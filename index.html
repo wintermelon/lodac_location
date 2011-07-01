@@ -15,8 +15,8 @@
     var center;
     var ep_list = new Array();
  
-    var markers = {lodac:{},dbpedia:{}, lgd:{}};
-    var new_markers = {lodac:{},dbpedia:{}, lgd:{}};
+    var markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
+    var new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
     var dist_array = new Array();
 
     var info_window;
@@ -176,9 +176,9 @@
                 
                 removeOldMarkers();
                 markers = new_markers;
-                new_markers = {lodac:{},dbpedia:{}, lgd:{}};
+                new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
 
-                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData"};
+                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData", wiki: "Semantic MediaWiki"};
                 dist_array.sort(function(a,b){return (a.dist-b.dist)});
                 for (var i=0; i<dist_array.length; i++){
                     var m = markers[dist_array[i].ep][dist_array[i].link]; 
@@ -257,6 +257,7 @@
             <input type="checkbox" id="lodac" value="lodac" name="ep" checked>LODAC   
             <input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia   
             <input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData   
+            <input type="checkbox" id="wiki" value="wiki" name="ep">Semantic MediaWiki   
         </div> 
         <div id="bounds" style="width: 600px; padding: 10px 0px"></div>
         <div id="referrer" style="width: 600px; padding-top: 10px">

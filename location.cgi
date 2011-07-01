@@ -73,11 +73,40 @@ q_lgd = """
         ).
     }
 """ % locals()
+
+ep_wiki = SPARQLWrapper("http://lod.ac/joseki/sparql")
+q_wiki = """
+    BASE <http://lod.ac/wiki/>
+    PREFIX article: <http://lod.ac/wiki/>
+    PREFIX a: <http://lod.ac/wiki/>
+    PREFIX property: <http://lod.ac/wiki/Property:>
+    PREFIX prop: <http://lod.ac/wiki/Property:>
+    PREFIX category: <http://lod.ac/wiki/Category:>
+    PREFIX cat: <http://lod.ac/wiki/Category:>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX fn: <http://www.w3.org/2005/xpath-functions#>
+    PREFIX afn: <http://jena.hpl.hp.com/ARQ/function#>
+    SELECT ?link ?title ?lat ?long
+    WHERE {
+            ?src <http://lod.ac/wiki/Property-3ATitle> ?title;
+            <http://lod.ac/wiki/Property-3ALat> ?lat;
+            <http://lod.ac/wiki/Property-3ALong> ?long;
+            <http://lod.ac/wiki/Property-3ALink> ?link;
+            FILTER (
+                ?lat > %(SW_lat)s &&
+                ?lat < %(NE_lat)s &&
+                ?long > %(SW_long)s &&
+                ?long < %(NE_long)s
+            ).
+    }
+""" % locals()
  
 ep_array = {
     'lodac': {'endpoint':ep_lodac, 'query':q_lodac}, 
     'dbpedia': {'endpoint':ep_dbpedia, 'query':q_dbpedia},
-    'lgd': {'endpoint':ep_lgd, 'query':q_lgd}
+    'lgd': {'endpoint':ep_lgd, 'query':q_lgd},
+    'wiki': {'endpoint':ep_wiki, 'query':q_wiki}
 }
 
 print "Content-type: text/javascript; charset=utf-8"  
