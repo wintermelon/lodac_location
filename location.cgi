@@ -23,7 +23,7 @@ if(method == 'GET' and form.has_key('endpoint') and form.has_key('NE_lat') and f
     SW_lat = form['SW_lat'].value
     SW_long = form['SW_long'].value
 
-ep_lodac = SPARQLWrapper("http://location.lod.ac/sparql")
+ep_lodac = SPARQLWrapper("http://lod.ac/sparql")
 q_lodac = """
     PREFIX dct: <http://purl.org/dc/terms/>
     PREFIX omgeo: <http://www.ontotext.com/owlim/geo#>
