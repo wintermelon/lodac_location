@@ -95,12 +95,12 @@
             }
         }
     }
-    
    function generateMarker(info){
         var pos = new google.maps.LatLng(info.lat, info.lng);
         dist_array.push({link: info.link, dist: info.dist, ep:info.ep});
         if(info.link in markers[info.ep]){
             new_markers[info.ep][info.link] = {marker: markers[info.ep][info.link].marker, info: info};
+            google.maps.event.clearListeners(new_markers[info.ep][info.link].marker, "click");
         }else{
             var options = {
                 map: map,
@@ -123,9 +123,11 @@
                     info_window.close();
                     opened_marker = {link:"", ep:""};
                 }
-                /*map.panTo(pos);*/
                 info_window = new google.maps.InfoWindow(info_options);
                 info_window.open(map, m.marker);
+                google.maps.event.addListener(info_window, "closeclick", function(){
+                    opened_marker = {link:"", ep:""}; 
+                });
                 opened_marker = {link: m.info.link, ep: m.info.ep};
             }); 
         }
@@ -141,6 +143,9 @@
         }
         info_window = new google.maps.InfoWindow({content: content});
         info_window.open(map, m.marker);
+        google.maps.event.addListener(info_window, "closeclick", function(){
+            opened_marker = {link:"", ep:""}; 
+        });
         opened_marker = {link: link, ep: ep};
         map.panTo(pos);
     }
@@ -188,9 +193,13 @@
                 }
 
                 if(info_window && opened_marker.link.length > 0 && opened_marker.ep.length > 0){
-                    var info = markers[opened_marker.ep][opened_marker.link].info;
-                    var content = "<b>"+info.id+"</b>: <a href=\""+info.link+"\">"+info.title+"</a>"; 
-                    info_window.setContent(content);
+                    if(markers[opened_marker.ep][opened_marker.link]){
+                        var info =  markers[opened_marker.ep][opened_marker.link].info;
+                        var content = "<b>"+info.id+"</b>: <a href=f\""+info.link+"\">"+info.title+"</a>"; 
+                        info_window.setContent(content);
+                    }else{
+                        opened_marker = {link:"", ep:""};
+                    } 
                 }
 
                 $("#result").append(results);
