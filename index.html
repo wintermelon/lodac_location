@@ -195,7 +195,7 @@
                 if(info_window && opened_marker.link.length > 0 && opened_marker.ep.length > 0){
                     if(markers[opened_marker.ep][opened_marker.link]){
                         var info =  markers[opened_marker.ep][opened_marker.link].info;
-                        var content = "<b>"+info.id+"</b>: <a href=f\""+info.link+"\">"+info.title+"</a>"; 
+                        var content = "<b>"+info.id+"</b>: <a href=\""+info.link+"\">"+info.title+"</a>"; 
                         info_window.setContent(content);
                     }else{
                         opened_marker = {link:"", ep:""};
