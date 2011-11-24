@@ -24,11 +24,12 @@
 
     function initialize(){
         var options = {
-            zoom: 14,
+            zoom: 13,
             mapTypeId: google.maps.MapTypeId.ROADMAP
         };
         map = new google.maps.Map($("#map")[0], options);
-      
+
+        /*      
         geocoder = new google.maps.Geocoder(); 
        
         if (navigator.geolocation){
@@ -49,7 +50,12 @@
         }else{
             browserSupportFlag = false;
             handleNoGeolocation(browserSupportFlag);
-        } 
+        }
+        */ 
+
+        browserSupportFlag = false;
+        handleNoGeolocation(browserSupportFlag);
+        
         google.maps.event.addListener(map, "idle", function(){
             showAllLocation(); 
         });
@@ -67,7 +73,8 @@
         }else{
             console.log("Your browser doesn't support geolocation.");
         }
-        map.setCenter(new google.maps.LatLng(35.693308,139.758282));
+        map.setCenter(new google.maps.LatLng(-27.46247970984481, 153.02873767199708));
+        //map.setCenter(new google.maps.LatLng(35.693308,139.758282));
     }
   
     function updateCenterAndBounds(){
@@ -269,7 +276,7 @@
             Data Sources:  
             <input type="checkbox" id="hitesh" value="hitesh" name="ep" checked>Evacuation Center
             <!--<input type="checkbox" id="lodac" value="lodac" name="ep">LODAC-->   
-            <input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia   
+            <!--<input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia-->   
             <input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData   
             <!--<input type="checkbox" id="wiki" value="wiki" name="ep">Semantic MediaWiki-->   
         </div> 
