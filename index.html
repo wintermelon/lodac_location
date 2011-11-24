@@ -189,7 +189,7 @@
                 for (var i=0; i<dist_array.length; i++){
                     var m = markers[dist_array[i].ep][dist_array[i].link]; 
                     m.info.id = i+1;
-                    results += "<b>"+m.info.id+"</b>\t<a href=\"javascript:void(0);\" onclick=\"openInfoWindow('"+m.info.link+"','"+m.info.ep+"');\">"+m.info.title+"</a>  (約"+Math.round(m.info.dist*10)/10+"km) ["+ep_name[m.info.ep]+"]<br/>";
+                    results += "<b>"+m.info.id+"</b>\t<a href=\"javascript:void(0);\" onclick=\"openInfoWindow('"+m.info.link+"','"+m.info.ep+"');\">"+m.info.title+"</a>  ("+Math.round(m.info.dist*10)/10+"km) ["+ep_name[m.info.ep]+"]<br/>";
                     setInfoWindow(m);
                 }
 
