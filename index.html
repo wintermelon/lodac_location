@@ -2,7 +2,7 @@
 <html> 
 <head> 
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/> 
-    <title>LODAC location</title> 
+    <title>Information of Evacuation Center</title> 
     <script src="http://maps.google.com/maps/api/js?sensor=true" type="text/javascript"></script>
     <script type="text/javascript" src="http://code.google.com/apis/gears/gears_init.js"></script> 
     <script type="text/javascript" 
@@ -15,43 +15,20 @@
     var center;
     var ep_list = new Array();
  
-    var markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, hitesh:{}};
-    var new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, hitesh:{}};
+    var markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, usahidi:{}, sahana:{}, google:{}, harvard:{}};
+    var new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, usahidi:{}, sahana:{}, google:{}, harvard:{}};
     var dist_array = new Array();
+    var icons = {usahidi:"red", sahana:"orange", google:"green", harvard:"blue", lodac:"yellow", lgd:"pink", wiki:"ltblue", dbpedia:"purple"} 
 
     var info_window;
     var opened_marker = {link:"", ep:""};
 
     function initialize(){
         var options = {
-            zoom: 13,
+            zoom: 8,
             mapTypeId: google.maps.MapTypeId.ROADMAP
         };
         map = new google.maps.Map($("#map")[0], options);
-
-        /*      
-        geocoder = new google.maps.Geocoder(); 
-       
-        if (navigator.geolocation){
-            browserSupportFlag = true;
-            navigator.geolocation.getCurrentPosition(function(position){
-                map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
-            }, function(){
-                handleNoGeolocation(browserSupportFlag);
-            });
-        }else if(google.gears){
-            browserSupportFlag = true;
-            var geo = google.gears.factory.create('beta.geolocation');
-            geo.getCurrentPosition(function(position){
-                map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
-            }, function(){
-                handleNoGeolocation(browserSupportFlag);
-            });
-        }else{
-            browserSupportFlag = false;
-            handleNoGeolocation(browserSupportFlag);
-        }
-        */ 
 
         browserSupportFlag = false;
         handleNoGeolocation(browserSupportFlag);
@@ -73,8 +50,7 @@
         }else{
             console.log("Your browser doesn't support geolocation.");
         }
-        map.setCenter(new google.maps.LatLng(-27.46247970984481, 153.02873767199708));
-        //map.setCenter(new google.maps.LatLng(35.693308,139.758282));
+        map.setCenter(new google.maps.LatLng(37.68491108983141, 140.3998866293946));
     }
   
     function updateCenterAndBounds(){
@@ -109,9 +85,12 @@
             new_markers[info.ep][info.link] = {marker: markers[info.ep][info.link].marker, info: info};
             google.maps.event.clearListeners(new_markers[info.ep][info.link].marker, "click");
         }else{
+            var image = new google.maps.MarkerImage(
+                "http://maps.google.co.jp/mapfiles/ms/icons/"+icons[info.ep]+"-dot.png");
             var options = {
                 map: map,
-                position: pos
+                position: pos,
+                icon: image 
             };
             new_markers[info.ep][info.link] = {marker: new google.maps.Marker(options), info: info};
         } 
@@ -189,9 +168,9 @@
                 
                 removeOldMarkers();
                 markers = new_markers;
-                new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, hitesh:{}};
+                new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, usahidi:{}, sahana:{}, google:{}, harvard:{}};
 
-                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData", wiki: "Semantic MediaWiki", hitesh: "Evacuation Center"};
+                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData", wiki: "Semantic MediaWiki", usahidi: "Usahidi", sahana: "Sahana", google: "Google", harvard: "Harvard"};
                 dist_array.sort(function(a,b){return (a.dist-b.dist)});
                 for (var i=0; i<dist_array.length; i++){
                     var m = markers[dist_array[i].ep][dist_array[i].link]; 
@@ -274,10 +253,13 @@
         <div id="map" style="width: 600px; height: 400px;"></div>
         <div id="source" style="width: 600px; padding: 10px 0px">
             Data Sources:  
-            <input type="checkbox" id="hitesh" value="hitesh" name="ep" checked>Evacuation Center
+            <input type="checkbox" id="usahidi" value="usahidi" name="ep">Usahidi
+            <input type="checkbox" id="sahana" value="sahana" name="ep" checked>Sahana
+            <input type="checkbox" id="google" value="google" name="ep">Google
+            <input type="checkbox" id="harvard" value="harvard" name="ep" checked>Harvard
             <!--<input type="checkbox" id="lodac" value="lodac" name="ep">LODAC-->   
             <!--<input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia-->   
-            <input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData   
+            <!--<input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData-->
             <!--<input type="checkbox" id="wiki" value="wiki" name="ep">Semantic MediaWiki-->   
         </div> 
         <div id="bounds" style="width: 600px; padding: 10px 0px"></div>
