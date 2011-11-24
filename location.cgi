@@ -103,8 +103,8 @@ q_wiki = """
 """ % locals()
 
 
-ep_usahidi = SPARQLWrapper("http://localhost:8880/openrdf-sesame/repositories/hitesh")
-#ep_usahidi = SPARQLWrapper("http://kingman.lodac.nii.ac.jp:8880/openrdf-sesame/repositories/hitesh")
+#ep_usahidi = ep_sahana = ep_google = ep_harvard = SPARQLWrapper("http://localhost:8880/openrdf-sesame/repositories/hitesh")
+ep_usahidi = ep_sahana = ep_google = ep_harvard = SPARQLWrapper("http://kingman.lodac.nii.ac.jp:8880/openrdf-sesame/repositories/hitesh")
 q_usahidi = """
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
@@ -124,8 +124,6 @@ q_usahidi = """
     }
 """ % locals()
 
-ep_sahana = SPARQLWrapper("http://localhost:8880/openrdf-sesame/repositories/hitesh")
-#ep_sahana = SPARQLWrapper("http://kingman.lodac.nii.ac.jp:8880/openrdf-sesame/repositories/hitesh")
 q_sahana = """
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
@@ -145,8 +143,6 @@ q_sahana = """
     }
 """ % locals()
 
-ep_google = SPARQLWrapper("http://localhost:8880/openrdf-sesame/repositories/hitesh")
-#ep_google = SPARQLWrapper("http://kingman.lodac.nii.ac.jp:8880/openrdf-sesame/repositories/hitesh")
 q_google = """
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
@@ -166,8 +162,6 @@ q_google = """
     }
 """ % locals()
 
-ep_harvard = SPARQLWrapper("http://localhost:8880/openrdf-sesame/repositories/hitesh")
-#ep_harvard = SPARQLWrapper("http://kingman.lodac.nii.ac.jp:8880/openrdf-sesame/repositories/hitesh")
 q_harvard = """
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
