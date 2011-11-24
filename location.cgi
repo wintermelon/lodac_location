@@ -51,7 +51,7 @@ q_dbpedia = """
             ?lat < %(NE_lat)s &&
             ?long > %(SW_long)s &&
             ?long < %(NE_long)s &&
-            lang(?title) = "ja"
+            lang(?title) = "en"
         ).
     }
 """ % locals()
@@ -69,7 +69,7 @@ q_lgd = """
             ?lat < %(NE_lat)s &&
             ?long > %(SW_long)s &&
             ?long < %(NE_long)s &&
-            lang(?title) = "ja"
+            lang(?title) = "en"
         ).
     }
 """ % locals()
@@ -101,13 +101,38 @@ q_wiki = """
             ).
     }
 """ % locals()
- 
+
+
+ep_hitesh = SPARQLWrapper("http://localhost:8880/openrdf-sesame/repositories/hitesh")
+#ep_hitesh = SPARQLWrapper("http://kingman.lodac.nii.ac.jp:8880/openrdf-sesame/repositories/hitesh")
+q_hitesh = """
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX disaster: <http://localhost/disaster#>
+    SELECT ?link ?title ?lat ?long
+    WHERE {
+            ?link geo:lat ?lat;
+            geo:long ?long;
+            disaster:address ?title;
+            FILTER (
+                xsd:float(?lat) > %(SW_lat)s &&
+                xsd:float(?lat) < %(NE_lat)s &&
+                xsd:float(?long) > %(SW_long)s &&
+                xsd:float(?long) < %(NE_long)s
+            ).
+    }
+""" % locals()
+
+
+
 ep_array = {
     'lodac': {'endpoint':ep_lodac, 'query':q_lodac}, 
     'dbpedia': {'endpoint':ep_dbpedia, 'query':q_dbpedia},
     'lgd': {'endpoint':ep_lgd, 'query':q_lgd},
-    'wiki': {'endpoint':ep_wiki, 'query':q_wiki}
+    'wiki': {'endpoint':ep_wiki, 'query':q_wiki},
+    'hitesh': {'endpoint':ep_hitesh, 'query':q_hitesh}
 }
+
 
 print "Content-type: text/javascript; charset=utf-8"  
 print

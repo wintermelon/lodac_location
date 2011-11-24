@@ -15,8 +15,8 @@
     var center;
     var ep_list = new Array();
  
-    var markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
-    var new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
+    var markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, hitesh:{}};
+    var new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, hitesh:{}};
     var dist_array = new Array();
 
     var info_window;
@@ -24,7 +24,7 @@
 
     function initialize(){
         var options = {
-            zoom: 16,
+            zoom: 14,
             mapTypeId: google.maps.MapTypeId.ROADMAP
         };
         map = new google.maps.Map($("#map")[0], options);
@@ -78,7 +78,7 @@
         ne_lng = ne.lng();
         sw_lat = sw.lat();
         sw_lng = sw.lng();
-        $("#bounds").append("中心座標： " + center + "<br/>表示範囲：<br/>" + ne + ", " + sw);
+        $("#bounds").append("Central Coordinate: " + center + "<br/>Display Range: <br/>" + ne + ", " + sw);
     }
    
     function removeMarker(link, ep){
@@ -156,11 +156,12 @@
         updateCenterAndBounds();
         dist_array = new Array();
         ep_list = getEndPointList();
-        
+        query = "endpoint="+ep_list.join()+"&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng
+         
         $.ajax({
             type: "GET",
             url: "location.cgi",
-            data: "endpoint="+ep_list.join()+"&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng,
+            data: query,
             dataType: "json",
             success: function(data){
                 var results = "";
@@ -181,9 +182,9 @@
                 
                 removeOldMarkers();
                 markers = new_markers;
-                new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
+                new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}, hitesh:{}};
 
-                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData", wiki: "Semantic MediaWiki"};
+                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData", wiki: "Semantic MediaWiki", hitesh: "Evacuation Center"};
                 dist_array.sort(function(a,b){return (a.dist-b.dist)});
                 for (var i=0; i<dist_array.length; i++){
                     var m = markers[dist_array[i].ep][dist_array[i].link]; 
@@ -203,6 +204,9 @@
                 }
 
                 $("#result").append(results);
+            },
+            error: function(){
+                console.log("Error");
             }
         });
     }
@@ -258,24 +262,18 @@
     <div id="leftbox" style="float: left; margin: 10px">  
         <div id="control" style="width: 600px; height: 35px; padding-top: 10px">
             <input type="text" id="center_location" style="width: 400px" onKeyPress="pressEnter();"/>
-            <input type="button" id="center_button" value="この地点を中心にする" onclick="setCenterAs();"/> 
+            <input type="button" id="center_button" value="Search" onclick="setCenterAs();"/> 
         </div>
         <div id="map" style="width: 600px; height: 400px;"></div>
         <div id="source" style="width: 600px; padding: 10px 0px">
-            データ取得先： 
-            <input type="checkbox" id="lodac" value="lodac" name="ep" checked>LODAC   
+            Data Sources:  
+            <input type="checkbox" id="hitesh" value="hitesh" name="ep" checked>Evacuation Center
+            <!--<input type="checkbox" id="lodac" value="lodac" name="ep">LODAC-->   
             <input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia   
             <input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData   
-            <input type="checkbox" id="wiki" value="wiki" name="ep">Semantic MediaWiki   
+            <!--<input type="checkbox" id="wiki" value="wiki" name="ep">Semantic MediaWiki-->   
         </div> 
         <div id="bounds" style="width: 600px; padding: 10px 0px"></div>
-        <div id="referrer" style="width: 600px; padding-top: 10px">
-            <script type="text/javascript" language="javascript">
-            <!--
-            document.write("リファラー: " + document.referrer);
-            // -->
-            </script>
-        </div>  
     </div> 
     <div id="rightbox" style="float: left; margin: 10px"> 
         <div id="result" style="width: 600px; height: 500px;"></div>
