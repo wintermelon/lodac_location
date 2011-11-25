@@ -153,7 +153,7 @@ q_google = """
             geo:long ?long;
             disaster:address ?title;
             disaster:source 'google'.
-
+            FILTER (
                 xsd:float(?lat) > %(SW_lat)s &&
                 xsd:float(?lat) < %(NE_lat)s &&
                 xsd:float(?long) > %(SW_long)s &&
