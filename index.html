@@ -143,7 +143,7 @@
         dist_array = new Array();
         ep_list = getEndPointList();
         query = "endpoint="+ep_list.join()+"&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng
-         
+        console.log(query); 
         $.ajax({
             type: "GET",
             url: "location.cgi",
@@ -253,9 +253,9 @@
         <div id="map" style="width: 600px; height: 400px;"></div>
         <div id="source" style="width: 600px; padding: 10px 0px">
             Data Sources:  
-            <input type="checkbox" id="usahidi" value="usahidi" name="ep">Usahidi
+            <input type="checkbox" id="usahidi" value="usahidi" name="ep" checked>Usahidi
             <input type="checkbox" id="sahana" value="sahana" name="ep" checked>Sahana
-            <input type="checkbox" id="google" value="google" name="ep">Google
+            <!--<input type="checkbox" id="google" value="google" name="ep">Google-->
             <input type="checkbox" id="harvard" value="harvard" name="ep" checked>Harvard
             <!--<input type="checkbox" id="lodac" value="lodac" name="ep">LODAC-->   
             <!--<input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia-->   

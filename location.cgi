@@ -103,8 +103,7 @@ q_wiki = """
 """ % locals()
 
 
-#ep_usahidi = ep_sahana = ep_google = ep_harvard = SPARQLWrapper("http://localhost:8880/openrdf-sesame/repositories/hitesh")
-ep_usahidi = ep_sahana = ep_google = ep_harvard = SPARQLWrapper("http://kingman.lodac.nii.ac.jp:8880/openrdf-sesame/repositories/hitesh")
+ep_usahidi = ep_sahana = ep_google = ep_harvard = SPARQLWrapper("http://lod.ac/apps/evacuation/sparql")
 q_usahidi = """
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
