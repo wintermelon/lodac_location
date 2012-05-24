@@ -5,6 +5,7 @@ from copy import deepcopy
 import os
 import cgi
 import atexit
+import json
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 import cgitb
@@ -38,7 +39,8 @@ q_lodac = """
     }
     """ % locals()
 
-ep_dbpedia = SPARQLWrapper("http://DBpedia.org/sparql")
+ep_dbpedia = SPARQLWrapper("http://dbpedia.org/sparql")
+ep_jadbpedia = SPARQLWrapper("http://ja.dbpedia.org/sparql")
 q_dbpedia = """
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
@@ -105,6 +107,7 @@ q_wiki = """
 ep_array = {
     'lodac': {'endpoint':ep_lodac, 'query':q_lodac}, 
     'dbpedia': {'endpoint':ep_dbpedia, 'query':q_dbpedia},
+    'jadbpedia': {'endpoint':ep_jadbpedia, 'query':q_dbpedia},
     'lgd': {'endpoint':ep_lgd, 'query':q_lgd},
     'wiki': {'endpoint':ep_wiki, 'query':q_wiki}
 }
@@ -112,30 +115,14 @@ ep_array = {
 print "Content-type: text/javascript; charset=utf-8"  
 print
 
-result_json = '{'
+result_dict = {}
 
 for e in endpoint:
     sparql_wrapper = ep_array[e]['endpoint']
     sparql = ep_array[e]['query']
-    
     sparql_wrapper.setQuery(sparql)
     sparql_wrapper.setReturnFormat(JSON)
+    result_dict[e] = sparql_wrapper.query().convert()
 
-    results = str(sparql_wrapper.query().convert())
-    results = eval(results)
-
-    if results["results"].has_key("bindings"):
-        if len(results["results"]) > 1:
-            tmp_bindings = deepcopy(results["results"]["bindings"])
-            results["results"] = {"bindings": tmp_bindings}
-
-    results = str(results)
-    results = results.replace("'", "\"")
-    results = results.replace("u\"", "\"")
-
-    result_json += '"%(e)s": %(results)s,' % locals()
-
-result_json = result_json.rstrip(",")
-result_json += '}'
-
+result_json = json.dumps(result_dict, ensure_ascii=False).encode("utf-8")
 print result_json

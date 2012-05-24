@@ -4,7 +4,6 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/> 
     <title>LODAC location</title> 
     <script src="http://maps.google.com/maps/api/js?sensor=true" type="text/javascript"></script>
-    <script type="text/javascript" src="http://code.google.com/apis/gears/gears_init.js"></script> 
     <script type="text/javascript" 
         src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
     <script type="text/javascript"> 
@@ -15,8 +14,9 @@
     var center;
     var ep_list = new Array();
  
-    var markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
-    var new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
+    var markers = {lodac:{},dbpedia:{},jadbpedia:{}, lgd:{}, wiki:{}};
+    var new_markers = {lodac:{},dbpedia:{},jadbpedia:{}, lgd:{}, wiki:{}};
+    var icons = {lodac:"red", dbpedia:"orange", jadbpedia:"green", wiki:"blue", lgd:"yellow"}  
     var dist_array = new Array();
 
     var info_window;
@@ -34,14 +34,6 @@
         if (navigator.geolocation){
             browserSupportFlag = true;
             navigator.geolocation.getCurrentPosition(function(position){
-                map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
-            }, function(){
-                handleNoGeolocation(browserSupportFlag);
-            });
-        }else if(google.gears){
-            browserSupportFlag = true;
-            var geo = google.gears.factory.create('beta.geolocation');
-            geo.getCurrentPosition(function(position){
                 map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
             }, function(){
                 handleNoGeolocation(browserSupportFlag);
@@ -67,7 +59,8 @@
         }else{
             console.log("Your browser doesn't support geolocation.");
         }
-        map.setCenter(new google.maps.LatLng(35.693308,139.758282));
+        map.setCenter(new google.maps.LatLng(35.95647622466297, 136.18403359737545));
+        // map.setCenter(new google.maps.LatLng(35.693308,139.758282));
     }
   
     function updateCenterAndBounds(){
@@ -78,7 +71,7 @@
         ne_lng = ne.lng();
         sw_lat = sw.lat();
         sw_lng = sw.lng();
-        $("#bounds").append("中心座標： " + center + "<br/>表示範囲：<br/>" + ne + ", " + sw);
+        $("#bounds").append("中心座標：<br/>" + center + "<br/>表示範囲：<br/>" + ne + ", " + sw);
     }
    
     function removeMarker(link, ep){
@@ -102,9 +95,11 @@
             new_markers[info.ep][info.link] = {marker: markers[info.ep][info.link].marker, info: info};
             google.maps.event.clearListeners(new_markers[info.ep][info.link].marker, "click");
         }else{
+            var image = new google.maps.MarkerImage("http://maps.google.co.jp/mapfiles/ms/icons/"+icons[info.ep]+"-dot.png"); 
             var options = {
                 map: map,
-                position: pos
+                position: pos,
+                icon: image
             };
             new_markers[info.ep][info.link] = {marker: new google.maps.Marker(options), info: info};
         } 
@@ -156,13 +151,15 @@
         updateCenterAndBounds();
         dist_array = new Array();
         ep_list = getEndPointList();
-        
+        query = "http://localhost/lodac_location2/location.cgi?endpoint="+ep_list.join()+"&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng
+        console.log(query); 
         $.ajax({
             type: "GET",
             url: "location.cgi",
             data: "endpoint="+ep_list.join()+"&NE_lat="+ne_lat+"&NE_long="+ne_lng+"&SW_lat="+sw_lat+"&SW_long="+sw_lng,
             dataType: "json",
             success: function(data){
+                console.log(data); 
                 var results = "";
                 for(d in ep_list){
                     var ep = ep_list[d];
@@ -181,9 +178,9 @@
                 
                 removeOldMarkers();
                 markers = new_markers;
-                new_markers = {lodac:{},dbpedia:{}, lgd:{}, wiki:{}};
+                new_markers = {lodac:{},dbpedia:{},jadbpedia:{}, lgd:{}, wiki:{}};
 
-                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", lgd: "LinkedGeoData", wiki: "Semantic MediaWiki"};
+                var ep_name = {lodac: "LODAC", dbpedia: "DBpedia", jadbpedia: "DBpedia Japanese", lgd: "LinkedGeoData", wiki: "Semantic MediaWiki"};
                 dist_array.sort(function(a,b){return (a.dist-b.dist)});
                 for (var i=0; i<dist_array.length; i++){
                     var m = markers[dist_array[i].ep][dist_array[i].link]; 
@@ -262,20 +259,14 @@
         </div>
         <div id="map" style="width: 600px; height: 400px;"></div>
         <div id="source" style="width: 600px; padding: 10px 0px">
-            データ取得先： 
-            <input type="checkbox" id="lodac" value="lodac" name="ep" checked>LODAC   
-            <input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia   
-            <input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData   
-            <input type="checkbox" id="wiki" value="wiki" name="ep">Semantic MediaWiki   
+            データ取得先：<br/> 
+            <input type="checkbox" id="lodac" value="lodac" name="ep" checked>LODAC<img src="http://maps.google.co.jp/mapfiles/ms/icons/red-dot.png" width="25"/>  
+            <input type="checkbox" id="dbpedia" value="dbpedia" name="ep">DBpedia<img src="http://maps.google.co.jp/mapfiles/ms/icons/orange-dot.png" width="25"/>  
+            <input type="checkbox" id="jadbpedia" value="jadbpedia" name="ep">DBpedia Japanese<img src="http://maps.google.co.jp/mapfiles/ms/icons/green-dot.png" width="25"/> 
+            <!--<input type="checkbox" id="lgd" value="lgd" name="ep">LinkedGeoData<img src="http://maps.google.co.jp/mapfiles/ms/icons/yellow-dot.png" width="25"/>-->   
+            <input type="checkbox" id="wiki" value="wiki" name="ep">Semantic MediaWiki<img src="http://maps.google.co.jp/mapfiles/ms/icons/blue-dot.png" width="25"/> 
         </div> 
         <div id="bounds" style="width: 600px; padding: 10px 0px"></div>
-        <div id="referrer" style="width: 600px; padding-top: 10px">
-            <script type="text/javascript" language="javascript">
-            <!--
-            document.write("リファラー: " + document.referrer);
-            // -->
-            </script>
-        </div>  
     </div> 
     <div id="rightbox" style="float: left; margin: 10px"> 
         <div id="result" style="width: 600px; height: 500px;"></div>
